@@ -1,0 +1,17 @@
+# Build context of the image: code and locked dependencies only.
+# Secrets and working data never go into a layer (a deleted file stays in the layer below).
+# hidden files and folders of the dev machine: .git, .venv, .env, caches, editor and tool settings
+.*
+secrets/
+**/__pycache__
+# notes in the project root; the package metadata needs README.md
+/*.md
+!README.md
+
+# not needed at runtime
+tests/
+scripts/
+docs/
+
+# runtime files of the dev machine (real data): the container gets its own volume
+instance/

@@ -1,0 +1,14 @@
+{# the cron mailing on demand, among the top bar buttons of includes/admin_buttons.html;
+   they are Admin only, and the route checks the role again #}
+<form method="POST" action="{{ url_for('sales.send_report', kind='daily') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="icon-button" title="Send daily report" aria-label="Send daily report">
+        <span class="fas fa-envelope"></span>
+    </button>
+</form>
+<form method="POST" action="{{ url_for('sales.send_report', kind='breakdown') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="icon-button" title="Send monthly breakdown (previous month, xlsx)" aria-label="Send monthly breakdown">
+        <span class="fas fa-file-excel"></span>
+    </button>
+</form>

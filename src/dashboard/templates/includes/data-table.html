@@ -1,0 +1,37 @@
+{# The table of parts_potential_v1 (ReusableDataTable): toolbar and an empty table; the rows
+   come from makeDataTable(id, frame, exportName) in bihcmr.js. The element ids derive from id. #}
+{% macro data_table(id, title='') %}
+<div class="reusable-table-toolbar">
+    {# without a title the toolbar keeps one line: the row count is in the page info as well #}
+    {% if title %}
+    <div class="reusable-table-title">
+        <strong>{{ title }}</strong>
+        <small id="{{ id }}-info" class="ms-2"></small>
+    </div>
+    {% endif %}
+    <div class="reusable-table-controls">
+        <input id="{{ id }}-search" class="form-control form-control-sm reusable-table-search" type="search" placeholder="Search...">
+        <div id="{{ id }}-pagination" class="reusable-table-pagination">
+            <button id="{{ id }}-prev-page" class="btn btn-light border btn-sm" type="button">&lt;</button>
+            <span id="{{ id }}-page-info"></span>
+            <button id="{{ id }}-next-page" class="btn btn-light border btn-sm" type="button">&gt;</button>
+        </div>
+        <div class="reusable-table-actions">
+            <button id="{{ id }}-reset-filters" class="btn btn-light border btn-sm reusable-table-icon-button reusable-table-reset"
+                    type="button" title="Reset filters" aria-label="Reset filters">
+                <i class="fas fa-undo"></i>
+            </button>
+            <button id="{{ id }}-export" class="btn btn-success btn-sm reusable-table-icon-button"
+                    type="button" title="Export filtered table" aria-label="Export filtered table">
+                <i class="fas fa-download"></i>
+            </button>
+        </div>
+    </div>
+</div>
+<div class="reusable-table-scroll">
+    <table id="{{ id }}" class="table table-sm table-hover align-middle reusable-data-table">
+        <thead></thead>
+        <tbody></tbody>
+    </table>
+</div>
+{% endmacro %}

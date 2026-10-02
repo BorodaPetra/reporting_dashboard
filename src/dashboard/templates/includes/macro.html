@@ -1,0 +1,5 @@
+{% macro render_errors(field) %}
+    {% if field.errors %}
+        <span style="color: red; {{ kwargs['style'] }}">{% for error in field.errors %}{{ error }}{% if not loop.last %}<br />{% endif %}{% endfor %}</span>
+    {% endif %}
+{% endmacro %}

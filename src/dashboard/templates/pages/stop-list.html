@@ -1,0 +1,56 @@
+{% extends "layouts/base.html" %}
+{% block title %} Stop List {% endblock %}
+
+{% block navbar_actions %}{% include 'includes/admin_buttons.html' %}{% endblock %}
+
+{% block content %}
+{% from 'includes/data-table.html' import data_table %}
+
+    {% include 'includes/form_file_upload.html' %}
+
+    <div class="mb-4">
+        <h1 class="h4">Stop list</h1>
+        <p class="text-muted mb-1">
+            A part is stopped when its number is in this list <b>or</b> it is discontinued in the parts master
+            (DS status). Stopped parts get StopFlag&nbsp;=&nbsp;Y in Parts Data: no stock flag, ZOMBIE when not dead.
+            The flag applies to the number itself, not to its supersession chain.
+        </p>
+        {% if user.has_role('Admin') %}
+        <p class="text-muted small mb-0">Upload: .xlsx with part numbers in the first column; the numbers are
+            <b>added</b> to the list. Remove single numbers below.</p>
+        {% endif %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, msg in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} py-2 mt-2 mb-0">{{ msg }}</div>
+        {% endfor %}
+        {% endwith %}
+    </div>
+
+    <div class="card border-0 shadow mb-4">
+        <div class="card-body">
+            {% if items %}
+            <p class="mb-2"><b>{{ items | length }}</b> numbers
+                {% if unknown %}; <span class="text-warning">{{ unknown | length }} not found in the parts master</span>{% endif %}
+            </p>
+            {{ data_table('stopList') }}
+            {% else %}
+            <p class="mb-0">The list is empty: only parts discontinued in the parts master are stopped.</p>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block javascripts %}
+    {% if items %}
+    <script type="text/javascript" nonce="{{ csp_nonce() }}">
+    // Remove: the number goes in the form, not in the url (it may contain "/")
+    const removeForm = partNumber => deleteForm("{{ url_for('stoplist_blueprint.remove') }}",
+        `Remove ${partNumber} from the stop list?`, `Remove ${partNumber}`, {part_number: partNumber});
+    makeDataTable("stopList", {{ table | tojson }}, "stop_list", {
+        actionColumns: ["Remove"],
+        cellFormatter: (value, column) => column === "Remove" ? {node: removeForm(value), classNames: ["action-cell"]} : null,
+    });
+    </script>
+    {% endif %}
+{% endblock javascripts %}

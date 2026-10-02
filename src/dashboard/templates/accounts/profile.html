@@ -1,0 +1,126 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} {{ title }}  {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+{% import 'includes/macro.html' as macros %}
+
+
+    {% if msg %}<p>{{ msg }}</p>{% endif %}
+    <div class="row">
+        <div class="col-12 col-xl-12">
+            <div class="card card-body border-0 shadow mb-4">
+                <h1 class="h5 mb-4">Profile information</h1>
+                <form method="post" action="">
+
+                    {{ form.hidden_tag() }}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username">Login</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="basic-addon1">
+                                    <span class="fas fa-user-circle"></span>
+                                </span>
+                                {{ form.username(class="form-control") }}
+                            </div>
+                            {{ macros.render_errors(form.username) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="basic-addon1">
+                                    <span class="fas fa-envelope"></span>
+                                </span>
+                                {{ form.email(class="form-control") }}
+                            </div>
+                            {{ macros.render_errors(form.email) }}
+                        </div>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col-md-6 mb-3">
+                            <label for="email">First Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="basic-addon1">
+                                    <span class="fas fa-light fa-signature"></span>
+                                </span>
+                                {{ form.firstname(class="form-control") }}
+                            </div>
+                            {{ macros.render_errors(form.firstname) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email">Last Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="basic-addon1">
+                                    <span class="fas fa-solid fa-signature"></span>
+                                </span>
+                                {{ form.lastname(class="form-control") }}
+                            </div>
+                            {{ macros.render_errors(form.lastname) }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password">New Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="basic-addon2">
+                                    <span class="fas fa-solid fa-lock"></span>
+                                </span>
+                                {{ form.password(class="form-control") }}
+                            </div>
+                            {{ macros.render_errors(form.password) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="passwordconfirm">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="basic-addon2">
+                                    <span class="fas fa-regular fa-lock"></span>
+                                </span>
+                                {{ form.passwordconfirm(class="form-control") }}
+                            </div>
+                            {{ macros.render_errors(form.passwordconfirm) }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <fieldset class="form-group">
+                                <legend class="">User Roles</legend>
+                                {{ macros.render_errors(form.roles) }}
+                                {% for role in form.roles %}
+                                    <div class="form-check form-check-inline">
+                                        {% if not user.has_role('Admin') %}
+                                            {{ role(class="form-check-input", disabled="disabled") }}
+                                        {% else %}
+                                            {{ role(class="form-check-input") }}
+                                        {% endif %}
+                                        {{ role.label(class="form-check-label") }}
+                                    </div>
+                                {% endfor %}
+                            </fieldset>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-gray-800 mt-2 animate-up-2" name="update_user" type="submit">Save all</button>
+                        {% with errors = get_flashed_messages(category_filter=["success"]) %}
+                        {% if errors %}
+                            <div class="success message">
+                                {%- for msg in errors %}
+                                    <span style="color: green">{{ msg }}</span>
+                                {% endfor -%}
+                            </div>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

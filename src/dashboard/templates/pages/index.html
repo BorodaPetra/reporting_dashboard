@@ -1,0 +1,26 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Dashboard{% endblock title %}
+
+{% block content %}
+
+{% set reports = [
+    ('sales',    'sales.index',    'Sales Report',    ['Sales against budget and forecast', 'outstanding orders', 'gross profit.']),
+    ('stock',    'stock.index',    'Stock Report',    ['Inventory value in USD and RUB', 'incoming and ordered stock', 'rank breakdown.']),
+    ('delivery', 'delivery.index', 'Delivery Report', ['Delivery status of purchase orders against the tracing file.']),
+    ('parts',    'parts.index',    'Parts Data',      ['Price, demand and stock details for a list of part numbers.']),
+] %}
+
+<div class="row">
+  {% for key, endpoint, title, lines in reports %}
+  <div class="col-12 col-md-6 col-xl-3 mb-4">
+    <a class="card report-card report-card-{{ key }} h-100 text-decoration-none" href="{{ url_for(endpoint) }}">
+      <div class="card-body">
+        <h2 class="h5">{{ title }}</h2>
+        <p class="mb-0">{% for line in lines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock content %}

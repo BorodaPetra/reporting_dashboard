@@ -1,0 +1,414 @@
+{% extends "layouts/base.html" %}
+{% block title %} Parts Sales Report {% endblock title %} 
+
+{% block navbar_actions %}
+{% with upload_row_extra = 'reports/sales_mailing.html' %}{% include 'includes/admin_buttons.html' %}{% endwith %}
+{% endblock %}
+{% block content %}
+{% from 'includes/data-table.html' import data_table %}
+{% from 'includes/top_parts.html' import top_parts as top_parts_card %}
+{% include 'includes/form_file_upload.html' %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% for category, msg in messages %}
+    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} py-2 mt-2 mb-2">{{ msg }}</div>
+{% endfor %}
+{% endwith %}
+{% include 'reports/sales_modal.html' %}
+
+<div class="row row-cols-1 row-cols-md-3 mb-3 text-center sales-tiles">
+<!-- <div class="hstack gap-5 justify-content-between"> -->
+    {% for title, value in tiles.items() %}
+    <div class="col">
+        <div class="card border-0 shadow shadow-lg">
+            <div class="card-header bg-primary  py-2  mb-2">
+                <div class="row d-flex align-items-center justify-content-center">
+                    <div class="text-white fw-extrabold mb-1">{{title}} (K USD)</div>
+                </div>
+            </div>
+            <div class="card-body  py-0">
+                <!-- actual, planned and difference in one line -->
+                <div class="tile-figures">
+                    <div>
+                        <div class="h6 text-gray-400 mb-0">Actual Sales</div>
+                        <h4 class="fw-extrabold" id="salesDigits_{{title}}">{{ value['Actual'] }}</h4>
+                    </div>
+                    <div>
+                        <div class="h6 text-gray-400 mb-0">Planned Sales</div>
+                        <h4 class="fw-extrabold" id="plannedDigits_{{title}}">{{ value['Forecast'] }}</h4>
+                    </div>
+                    <div>
+                        <div class="h6 text-gray-400 mb-0">Difference</div>
+                        <h4 class="fw-extrabold text-{{value['Color_diff']}}" data-count-up>{{ value['Difference'] }}</h4>
+                    </div>
+                </div>
+
+                <div class="progress-wrapper">
+                    <div class="progress-info info-xl">
+                        <div class="progress-label">
+                            <small class="fw-regular mb-2">{{ value['Period'] }}</small>
+                            
+                        </div>
+                        <div class="progress-percentage">
+                            <span class="text-{{ value['Color_pct'] }} fw-extrabold fs-7" data-count-up>{{ value['Performance'] }}</span>
+                        </div>
+                    </div>
+                    <div class="progress progress-xl" id="achievedPrc_{{title}}">
+                        <div class="progress-bar bg-{{ value['Color_pct'] }}" role="progressbar" style="width: 0" data-progress-grow="{{ value['Performance'] }}" aria-valuenow="{{ value['Achieved'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %} 
+</div>   
+{% include 'reports/sales_tables.html' %}
+</div>
+
+<div class="row">
+<div class="col-12 col-lg-6 mb-4">
+    <div class="card shadow-md h-100">
+        <div class="card-header bg-primary py-2">
+            <div class="d-flex gap-2">
+                <h5 class="me-auto text-center text-white mt-2">{{ fy }} Sales Performance</h5>
+                <button type="button" class="btn btn-white bg-white active" id="flip_off_1" aria-pressed="true" title="Chart">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart" viewBox="0 0 16 16">
+                        <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5v12h-2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"></path>
+                    </svg>
+                </button>
+                <button type="button" class="btn btn-white bg-white" id="flip_on_1" aria-pressed="false" title="Table">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-table" viewBox="0 0 16 16">
+                        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 2h-4v3h4zm0 4h-4v3h4zm0 4h-4v3h3a1 1 0 0 0 1-1zm-5 3v-3H6v3zm-5 0v-3H1v2a1 1 0 0 0 1 1zm-4-4h4V8H1zm0-4h4V4H1zm5-3v3h4V4zm4 4H6v3h4z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+        </div>
+        <div class="card-body faces" id="flip_card_1">
+            <div class="front">
+                <div class="w-100" id='{{chart_fy.name}}_chart'></div>
+            </div>
+            <div class="back table-face">
+                {{ data_table(chart_fy.name ~ '_table') }}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-12 col-lg-6 mb-4">
+    <div class="card shadow-md h-100">
+        <div class="card-header bg-primary py-2">
+            <div class="d-flex gap-2">
+                <h5 class="me-auto text-center text-white mt-2">Monthly Gross Profit Status</h5>
+                <button type="button" class="btn btn-white bg-white active" id="flip_off_5" aria-pressed="true" title="Chart">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart" viewBox="0 0 16 16">
+                        <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5v12h-2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"></path>
+                    </svg>
+                </button>
+                <button type="button" class="btn btn-white bg-white" id="flip_on_5" aria-pressed="false" title="Table">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-table" viewBox="0 0 16 16">
+                        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 2h-4v3h4zm0 4h-4v3h4zm0 4h-4v3h3a1 1 0 0 0 1-1zm-5 3v-3H6v3zm-5 0v-3H1v2a1 1 0 0 0 1 1zm-4-4h4V8H1zm0-4h4V4H1zm5-3v3h4V4zm4 4H6v3h4z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+        </div>
+        <div class="card-body faces" id="flip_card_5">
+            <div class="front">
+                <div class="w-100" id='{{chart_gross_profit.name}}_chart'></div>
+            </div>
+            <div class="back table-face">
+                {{ data_table(chart_gross_profit.name ~ '_table') }}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-12 col-lg-6 mb-4">
+    <div class="card shadow-md h-100">
+        <div class="card-header bg-primary py-2">
+            <div class="d-flex gap-2">
+                <h5 class="me-auto text-center text-white mt-2">Accamulated Outstanding Orders</h5>
+                <button type="button" class="btn btn-white bg-white active" id="flip_off_3" aria-pressed="true" title="Chart">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart" viewBox="0 0 16 16">
+                        <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5v12h-2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"></path>
+                    </svg>
+                </button>
+                <button type="button" class="btn btn-white bg-white" id="flip_on_3" aria-pressed="false" title="Table">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-table" viewBox="0 0 16 16">
+                        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 2h-4v3h4zm0 4h-4v3h4zm0 4h-4v3h3a1 1 0 0 0 1-1zm-5 3v-3H6v3zm-5 0v-3H1v2a1 1 0 0 0 1 1zm-4-4h4V8H1zm0-4h4V4H1zm5-3v3h4V4zm4 4H6v3h4z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+        </div>
+        <div class="card-body faces" id="flip_card_3">
+            <div class="front">
+                <div class="w-100" id='{{chart_outstanding.name}}_chart'></div>
+            </div>
+            <div class="back table-face">
+                {{ data_table(chart_outstanding.name ~ '_table') }}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-12 col-lg-6 mb-4">
+    <div class="card shadow-md h-100">
+        <div class="card-header bg-primary py-2">
+            <div class="d-flex gap-2">
+                <h5 class="me-auto text-center text-white mt-2">{{ breakdown_group }} Monthly Sales Breakdown</h5>
+                <button type="button" class="btn btn-white bg-white active" id="flip_off_4" aria-pressed="true" title="Chart">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart" viewBox="0 0 16 16">
+                        <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5v12h-2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"></path>
+                    </svg>
+                </button>
+                <button type="button" class="btn btn-white bg-white" id="flip_on_4" aria-pressed="false" title="Table">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-table" viewBox="0 0 16 16">
+                        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 2h-4v3h4zm0 4h-4v3h4zm0 4h-4v3h3a1 1 0 0 0 1-1zm-5 3v-3H6v3zm-5 0v-3H1v2a1 1 0 0 0 1 1zm-4-4h4V8H1zm0-4h4V4H1zm5-3v3h4V4zm4 4H6v3h4z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+        </div>
+        <div class="card-body faces" id="flip_card_4">
+            <div class="front">
+                <div class="w-100" id='{{chart_breakdown.name}}_chart'></div>
+            </div>
+            <div class="back table-face">
+                {{ data_table(chart_breakdown.name ~ '_table') }}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-12 mb-4">
+    <div class="card shadow-md h-100">
+        <div class="card-header bg-primary py-2">
+            <div class="d-flex gap-2">
+                <h5 class="me-auto text-center text-white mt-2"><b>Interactive Sales Chart</b></h5>
+                <!-- Button Modal -->
+                <button type="button" class="btn btn-white bg-white"  data-bs-toggle="modal" data-bs-target="#modalNotification">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="danger" class="bi bi-gear" viewBox="0 0 16 16">
+                        <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"></path>
+                        <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"></path>
+                    </svg>
+                </button>
+                <button type="button" class="btn btn-white bg-white active" id="flip_off_2" aria-pressed="true" title="Chart">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart" viewBox="0 0 16 16">
+                        <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5v12h-2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"></path>
+                    </svg>
+                </button>
+                <button type="button" class="btn btn-white bg-white" id="flip_on_2" aria-pressed="false" title="Table">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-table" viewBox="0 0 16 16">
+                        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 2h-4v3h4zm0 4h-4v3h4zm0 4h-4v3h3a1 1 0 0 0 1-1zm-5 3v-3H6v3zm-5 0v-3H1v2a1 1 0 0 0 1 1zm-4-4h4V8H1zm0-4h4V4H1zm5-3v3h4V4zm4 4H6v3h4z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+        </div>
+        <div class="card-body faces" id="flip_card_2">
+            <div class="front">
+                <div class="w-100" id='{{chart_detailed.name}}_chart'></div>
+            </div>
+            <div class="back table-face">
+                {{ data_table(chart_detailed.name ~ '_table') }}
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+	<div class="row">
+		<div class="col-12 mb-4">
+			{{ top_parts_card("TOP-10 Parts Sold, " ~ top_parts.period ~ " (USD)", top_parts,
+							  url_for('sales.top_parts_xlsx'), "the FY sales") }}
+		</div>
+</div>
+
+<div class="modal fade" id="imgSpinner1" tabindex="-1" aria-labelledby="submitBtnIdx" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg justify-content-center" role="document">
+        <div class="text-center">
+            <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script nonce="{{ csp_nonce() }}">
+    $( document ).ready(function() {
+        /* sales report */
+        let dealer_names = {{ groups | tojson }};          // report groups
+        let card_dlrs = $("#dcodeCardIdx");
+        let formdata = {
+                        'dealers':Object.fromEntries(dealer_names.map(d => [d, false])),
+                        'codes':Object.fromEntries(dealer_names.map(d => [d, []])),
+                        'scope':'',
+                        'start_date':'',
+                        'end_date':'',
+                        'show_tables':true
+                        }
+        
+        $("#showTableCheckIdx").on('change', function(){
+            if($(this).is(":checked")){
+                formdata['show_tables'] = true
+            }else{
+                formdata['show_tables'] = false
+            }            
+        })
+        
+        $("#start_date").on('change', function(){
+            formdata['start_date'] = $(this).prop('value');
+        })
+
+        $("#end_date").on('change', function(){
+            formdata['end_date'] = $(this).prop('value');
+        })
+
+        $("#periodScopeGroupIdx > input").each(function(){
+            $(this).on('change', function(){
+		        if($(this).is(":checked"))
+                    formdata['scope'] = $(this).prop('value')
+            });
+        })
+
+
+        function mfunc(dname, dlr_name_checkbox){
+            let dlr_code_checkboxes = $("."+dname+"_code_check");
+            let listel = $("#_"+dname)
+
+            function uncheckAll(checks){
+                checks.each(function() {
+                    $(this).prop("checked",false);                    
+                    $(this).prop("disabled",true);
+                    listel.html("<b>"+dname+": </b>" + "<span style='font-size:0.8em'>"+Object.values(formdata['codes'][dname])+"</span>")
+                });
+            }
+
+            function checkAll(checks){
+                checks.each(function() {
+                    $(this).prop("disabled",false);
+                    $(this).prop("checked",true);
+                    formdata['codes'][dname].push($(this).prop('name'));
+                    listel.html("<b>"+dname+": </b>" + "<span style='font-size:0.8em'>"+ Object.values(formdata['codes'][dname]).join() +"</span>")
+                });
+            }
+
+            dlr_name_checkbox.on('change',function() {
+                formdata['codes'][dname] = [];
+                if ($(this).is(":checked")){
+                    formdata['dealers'][dname] = true;    
+                    checkAll(dlr_code_checkboxes);
+                    $("#summaryfield").show();
+                } else {
+                    formdata['dealers'][dname] = false;  
+                    uncheckAll(dlr_code_checkboxes);
+                }
+            });
+
+            dlr_code_checkboxes.each(function(){
+                $(this).on('change', function(){
+		            if($(this).is(":checked")){
+                        if (!formdata['codes'][dname].includes($(this).prop('name')))
+                            formdata['codes'][dname].push($(this).prop('name'));
+                            listel.html("<b>"+dname+": </b>" + "<span style='font-size:0.8em'>"+ Object.values(formdata['codes'][dname]).join() +"</span>")
+                    } else {
+                        formdata['codes'][dname].splice($.inArray($(this).prop('name'), formdata['codes'][dname]), 1);
+                        listel.html("<b>"+dname+": </b>" + "<span style='font-size:0.8em'>"+ Object.values(formdata['codes'][dname]).join() +"</span>")
+                        $("#hiddenVal").prop('value',formdata['codes'])
+                    }
+                })
+            })
+        }
+        
+        $('.dnameCheckboxGroupClass').each(function(){
+            let dname = $(this).prop('name');
+            let subname = dname.substring(0,3);
+            $(this).on('change', mfunc(subname, $(this)));
+        });
+
+
+        $("#formSettings").on("submit", function (event) {       // the filter form only
+            event.preventDefault();
+            let modSpinner = new bootstrap.Modal('#imgSpinner1');
+            let formData = new FormData(event.target);
+            let json_data = JSON.stringify(Object.fromEntries(formData));
+            
+            
+            $.ajax({
+                type: "POST",
+                url: "{{url_for('sales.process')}}",
+                data: json_data,
+                contentType: "application/json",
+                
+                beforeSend: function() {
+                    $("#modalclosebtn").click();
+                    modSpinner.show();
+                },
+
+                success: function(response) { 
+                    chartEmbeding("#detailed_chart",
+                        response.detailed.chart
+                    );
+                    makeDataTable("{{ chart_detailed['name'] }}_table", response.detailed.table,
+                                  "Interactive Sales Chart");
+                      
+                },
+                error: function(error) { 
+                    console.log(error);
+                    modSpinner.hide(); 
+                },
+
+                complete: function() {
+                    setTimeout(function(){
+                    modSpinner.hide();
+                    notifySubmitted('Settings Submitted');            
+                    },500)
+                }, 
+            });
+        })
+
+    
+    chartEmbeding("#{{chart_fy['name']}}_chart", {{chart_fy['chart'] | tojson }});
+    makeDataTable("{{chart_fy['name']}}_table", {{chart_fy['table'] | tojson}}, "{{ fy }} Sales Performance");
+            
+	chartEmbeding("#{{chart_gross_profit['name']}}_chart", {{chart_gross_profit['chart'] | tojson}});
+    makeDataTable("{{chart_gross_profit['name']}}_table", {{chart_gross_profit['table'] | tojson}}, "Monthly Gross Profit Status");
+            
+    chartEmbeding("#{{chart_outstanding['name']}}_chart", {{chart_outstanding['chart'] | tojson}});
+    makeDataTable("{{chart_outstanding['name']}}_table", {{chart_outstanding['table'] | tojson}}, "Accumulated Outstanding Orders");
+
+    chartEmbeding("#{{chart_breakdown['name']}}_chart", {{chart_breakdown['chart'] | tojson}});
+    makeDataTable("{{chart_breakdown['name']}}_table", {{chart_breakdown['table'] | tojson}}, "Monthly Sales Breakdown");
+
+    chartEmbeding("#detailed_chart",  {{chart_detailed['chart'] | tojson }});
+    makeDataTable("{{chart_detailed['name']}}_table", {{chart_detailed['table'] | tojson}}, "Interactive Sales Chart");
+
+ 
+
+    $("#adjBtn").click(function(){
+        $('#formSettings').animate({width:"toggle",height:"toggle"});
+    });
+    $("#showDealerSelector").click(function(){
+        $('#dlrsCol').slideToggle();
+    });
+    
+
+    // chart / table of each card: showFace (bihcmr.js) fades between the two faces
+    [1, 2, 3, 4, 5].forEach(i => {
+        const card = document.getElementById(`flip_card_${i}`);
+        const buttons = {chart: $(`#flip_off_${i}`), table: $(`#flip_on_${i}`)};
+        const show = table => {
+            showFace(card, table);
+            buttons.chart.toggleClass('active', !table).attr('aria-pressed', String(!table));
+            buttons.table.toggleClass('active', table).attr('aria-pressed', String(table));
+        };
+        buttons.chart.on('click', () => show(false));
+        buttons.table.on('click', () => show(true));
+    });
+
+});
+</script>
+{% endblock javascripts%}
+
+
+
+
+

@@ -1,0 +1,41 @@
+{# TOP-10 parts as a ranked list with bars, sales and stock report.
+   top: reports/common/top_parts.TopParts; share_of: what the share of the TOP is taken of #}
+{% macro top_parts(title, top, export_url, share_of) %}
+<div class="card shadow-md top-parts">
+    <div class="card-header bg-primary py-2">
+        <div class="d-flex gap-2 align-items-center">
+            <h5 class="me-auto text-white mt-2">{{ title }}</h5>
+            {% if not top.frame.empty %}
+            <a class="btn btn-white bg-white" href="{{ export_url }}" title="Download xlsx" aria-label="Download xlsx">
+                <i class="fas fa-download"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        {% if top.frame.empty %}
+        <p class="text-muted mb-0">No parts.</p>
+        {% else %}
+        <p class="top-parts-share">
+            TOP-{{ top.frame | length }}: <strong>${{ "{:,.0f}".format(top.frame["AMOUNT"].sum()) }}</strong>,
+            {{ "{:.0%}".format(top.share) }} of {{ share_of }}
+        </p>
+        <ol class="top-parts-list">
+            {% for row in top.rows() %}
+            <li class="top-parts-row">
+                <span class="top-parts-rank">{{ loop.index }}</span>
+                <span class="top-parts-part">
+                    <strong>{{ row.PTS_NO }}</strong>
+                    <span class="top-parts-description">{{ row.DESCR }}</span>
+                </span>
+                <span><span class="top-parts-category">{{ row.CAT or "-" }}</span></span>
+                <span class="top-parts-number">{{ "{:,.0f}".format(row.QTY) }} pcs</span>
+                <span class="top-parts-number top-parts-amount">${{ "{:,.0f}".format(row.AMOUNT) }}</span>
+                <span class="top-parts-bar"><span style="width: {{ row.BAR }}%"></span></span>
+            </li>
+            {% endfor %}
+        </ol>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}

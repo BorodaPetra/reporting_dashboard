@@ -1,0 +1,39 @@
+
+<div class="row">
+    <div class="accordion accordion-flush" id="accordionCharts">
+        {% for chart in [chart_fy,chart_detailed] %}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="{{chart.name}}">
+                <button class="accordion-button bg-primary text-white rounded" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#{{chart.name}}_target" aria-expanded="false" aria-controls="{{chart.name}}_target">
+                    {{chart.name}}
+                </button>
+            </h2>
+            <div id="{{chart.name}}_target" class="accordion-collapse collapse" data-bs-parent="#accordionCharts">
+                <div class="accordion-body  bg-white">
+                    <div class="div p-0" id="vega_embed_{{chart.name}}"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+  
+<div class="card  shadow-lg">
+    <div class="card-header border-primary p-2 bg-primary text-white text-center">
+        <h2 class="h6 text-center fw-extrabold">Financial Year 2024 Sales Performace by Dealer</h2>
+    </div>
+    <div class="card-body">
+        <div class="container-fluid p-0" id="vega_embed_{{chart_fy.name}}"></div>
+    </div>
+</div>
+
+<div class="card  shadow-lg">
+    <div class="card-header border-primary p-2 bg-primary text-white text-center">
+        <h2 class="h6 text-center fw-extrabold">Interactive Sales Chart</h2>
+    </div>
+    <div class="card-body">
+        <div class="container-fluid p-0" id="vega_embed_{{chart_detailed.name}}"></div>
+    </div>
+</div>

@@ -1,0 +1,27 @@
+   
+    {% if user.has_role('Admin') %}
+    {# the toggle button is in the top bar: includes/admin_buttons.html #}
+    {# upload_url: where the file goes; without it, to the page itself (delivery, stop list) #}
+    <form method="POST" enctype="multipart/form-data"{% if upload_url %} action="{{ upload_url }}"{% endif %}>
+        {# CSRFProtect checks every POST: each form carries the token #}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="d-flex justify-content-end">
+            <div class="collapse" id="collapseExample">
+                <div class="card card-body mb-4">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        Previous update:
+                        <span class="badge bg-secondary"> {{update_date}} </span>
+                    </h6>
+                    <div class="row g-2">
+                        <input type="file" name="file" accept=".xls,.xlsx" class="form-control form-control-sm" aria-label="Small file input example">
+                    </div>
+                    <div class="col-sm d-flex justify-content-start mt-2">
+                        <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+
+

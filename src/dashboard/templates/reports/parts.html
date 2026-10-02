@@ -1,0 +1,764 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Parts Data{% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+{{ super() }}
+
+<style>
+
+.modal-xl {
+  max-width: 90%;
+}
+
+.input-block {
+    display: none;
+    width: 400px;
+  }
+
+
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;           /* the gutter of the report grid (theme.css) */
+}
+
+.sbtn:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s;
+}
+
+.row_label {
+  color:grey;
+  font-size:13px;
+}
+
+.row_value {
+  font-weight:500;
+  font-size:13px;
+}
+
+
+
+
+/* monthly tables of the demand / stock / prices tabs: as wide as their content, values centred */
+.monthly-table {
+  width: auto;
+}
+/* 2 px below Volt's .table cells (14 px, head 12 px), as every table (theme.css) */
+.monthly-table th,
+.monthly-table td {
+  font-size: 12px;
+  padding: 0.2rem 0.9rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.monthly-table thead th {
+  font-size: 10px;
+}
+
+/* Orders tab: the totals of the part, a card above each order table */
+.order-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+}
+.order-summary dt {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+.order-summary dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the supersession tree: nested lists like a folder tree, a guide line per level */
+.supersession-tree {
+  overflow-x: auto;
+  font-size: 13px;
+}
+.supersession-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.supersession-tree li > ul {
+  margin-left: 9px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+}
+.supersession-tree li.collapsed > ul {
+  display: none;
+}
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.tree-row.selected {
+  background: var(--accent-soft);
+}
+.tree-toggle {
+  width: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+}
+.tree-toggle i {
+  transition: transform 0.15s;
+}
+.supersession-tree li:not(.collapsed) > .tree-row .tree-toggle i {
+  transform: rotate(90deg);
+}
+.tree-icon {
+  width: 16px;
+  color: var(--accent);
+}
+.tree-description {
+  color: var(--text-secondary);
+}
+.tree-link {
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+.tree-detail {                  /* TNVED, primary vendor: paler than the link tag next to them */
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+@media (max-width: 768px) {
+.cards-grid {
+      grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+{% from 'includes/data-table.html' import data_table %}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-inline-flex gap-4 justify-content-between">
+      <div class="d-block" id="settingsBlock">
+        <small class="badge fw-bolder fs-7 ms-4 mb-1 text-danger bg-white border-primary" for="inputMode">Select Search Mode</small> 
+        <div class="form-group hstack gap-3 mb-2 mt-2" role="group" id="inputMode">
+            {% for k,v in {'FromFile':'#inputFileBlock','Multiple':'#inputTextAreaBlock','Single':'#inputTextBlock'}.items() %}
+                <input type="radio" class="form-control btn-check inputMode" name="mode" id="{{k}}Check" value="{{k}}" data-target={{v}} checked>
+                {% if k == 'Single' %}
+                <label class="form-control btn btn-outline-primary border bg-outline"  for="{{k}}Check"><span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-type" viewBox="0 0 16 16">
+                    <path d="m2.244 13.081.943-2.803H6.66l.944 2.803H8.86L5.54 3.75H4.322L1 13.081zm2.7-7.923L6.34 9.314H3.51l1.4-4.156zm9.146 7.027h.035v.896h1.128V8.125c0-1.51-1.114-2.345-2.646-2.345-1.736 0-2.59.916-2.666 2.174h1.108c.068-.718.595-1.19 1.517-1.19.971 0 1.518.52 1.518 1.464v.731H12.19c-1.647.007-2.522.8-2.522 2.058 0 1.319.957 2.18 2.345 2.18 1.06 0 1.716-.43 2.078-1.011zm-1.763.035c-.752 0-1.456-.397-1.456-1.244 0-.65.424-1.115 1.408-1.115h1.805v.834c0 .896-.752 1.525-1.757 1.525"/>
+                  </svg></span>
+                </label>
+                
+                
+                {% elif k == 'Multiple' %}
+                <label class="form-control btn btn-outline-primary border bg-outline"  for="{{k}}Check"><span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ol" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5"/>
+                    <path d="M1.713 11.865v-.474H2c.217 0 .363-.137.363-.317 0-.185-.158-.31-.361-.31-.223 0-.367.152-.373.31h-.59c.016-.467.373-.787.986-.787.588-.002.954.291.957.703a.595.595 0 0 1-.492.594v.033a.615.615 0 0 1 .569.631c.003.533-.502.8-1.051.8-.656 0-1-.37-1.008-.794h.582c.008.178.186.306.422.309.254 0 .424-.145.422-.35-.002-.195-.155-.348-.414-.348h-.3zm-.004-4.699h-.604v-.035c0-.408.295-.844.958-.844.583 0 .96.326.96.756 0 .389-.257.617-.476.848l-.537.572v.03h1.054V9H1.143v-.395l.957-.99c.138-.142.293-.304.293-.508 0-.18-.147-.32-.342-.32a.33.33 0 0 0-.342.338zM2.564 5h-.635V2.924h-.031l-.598.42v-.567l.629-.443h.635z"/>
+                  </svg></span>
+                </label>
+                
+                
+                {% else %}
+                <label class="form-control btn btn-outline-primary border bg-outline"  for="{{k}}Check"><span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filetype-xlsx" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M14 4.5V11h-1V4.5h-2A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v9H2V2a2 2 0 0 1 2-2h5.5zM7.86 14.841a1.13 1.13 0 0 0 .401.823q.195.162.479.252.284.091.665.091.507 0 .858-.158.355-.158.54-.44a1.17 1.17 0 0 0 .187-.656q0-.336-.135-.56a1 1 0 0 0-.375-.357 2 2 0 0 0-.565-.21l-.621-.144a1 1 0 0 1-.405-.176.37.37 0 0 1-.143-.299q0-.234.184-.384.188-.152.513-.152.214 0 .37.068a.6.6 0 0 1 .245.181.56.56 0 0 1 .12.258h.75a1.1 1.1 0 0 0-.199-.566 1.2 1.2 0 0 0-.5-.41 1.8 1.8 0 0 0-.78-.152q-.44 0-.777.15-.336.149-.527.421-.19.273-.19.639 0 .302.123.524t.351.367q.229.143.54.213l.618.144q.31.073.462.193a.39.39 0 0 1 .153.326.5.5 0 0 1-.085.29.56.56 0 0 1-.255.193q-.168.07-.413.07-.176 0-.32-.04a.8.8 0 0 1-.249-.115.58.58 0 0 1-.255-.384zm-3.726-2.909h.893l-1.274 2.007 1.254 1.992h-.908l-.85-1.415h-.035l-.853 1.415H1.5l1.24-2.016-1.228-1.983h.931l.832 1.438h.036zm1.923 3.325h1.697v.674H5.266v-3.999h.791zm7.636-3.325h.893l-1.274 2.007 1.254 1.992h-.908l-.85-1.415h-.035l-.853 1.415h-.861l1.24-2.016-1.228-1.983h.931l.832 1.438h.036z"/>
+                  </svg></span>
+                </label>
+                
+                {% endif %}
+            {% endfor %}
+        </div>
+      </div>
+      <div class="vr text-primary" style="width:1pt"></div>
+      <div class="col-9 d-flex align-items-center">
+        <div class="d-flex mt-3 w-100 gap-4">
+
+          <div class="input-block w-100" id="inputTextBlock">
+            {# suggestions: part numbers that start with the typed text (parts.suggest); choosing one only fills the field #}
+            <input type="text" class="form-control border-ternary" id="singleinput" list="partSuggestions"
+                   autocomplete="off" placeholder="Type to search parts...">
+            <datalist id="partSuggestions"></datalist>
+          </div>
+          <div class="input-block w-100" id="inputTextAreaBlock">
+            <textarea class="form-control border-ternary" id="multiinput" rows="1" placeholder="Paste multiple parts here..."></textarea>
+          </div>
+          <div class="input-block w-100" id="inputFileBlock">
+            <input type="file" class="form-control border-ternary" 
+              id="fileinput" 
+              accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
+              title="Allowed formats: (.xlsx, .csv)"> <span id="uploadStatus"></span>
+          </div>
+          <button type="button" class="btn btn-success sbtn" id="searchBtn">
+            <svg class="icon icon-xs" fill="white" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>
+          </button>
+          <!-- <button type="button" class="btn btn-outline-danger">✖</button> -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-baseline">
+      <div class="col-2">
+        <div class="mt-2 mb-2">
+          <select class="form-select border-ternary" id="partSelect" disabled></select> 
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="danger" class="bi bi-gear" viewBox="0 0 16 16">
+                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"></path>
+                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"></path>
+            </svg>
+        </button>
+        <button type="button" class="btn btn-gray-100" data-bs-toggle="modal" data-bs-target="#dataModal">
+            <svg class="icon icon-xxs" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M2 9.5A3.5 3.5 0 005.5 13H9v2.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 15.586V13h2.5a4.5 4.5 0 10-.616-8.958 4.002 4.002 0 10-7.753 1.977A3.5 3.5 0 002 9.5zm9 3.5H9V8a1 1 0 012 0v5z" clip-rule="evenodd"></path>
+            </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="card mb-4">
+ <div class="card-body">
+    <nav>
+      <div class="nav nav-tabs mb-4" id="nav-block" role="tablist">
+        <a class="nav-item nav-link active" id="nav-over-tab" data-bs-toggle="tab" href="#nav-over" role="tab" aria-controls="nav-over" aria-selected="true"><b>Overview</b></a>
+        <a class="nav-item nav-link" id="nav-prc-tab" data-bs-toggle="tab" href="#nav-prc" role="tab" aria-controls="nav-prc" aria-selected="false"><b>Prices</b></a>
+        <a class="nav-item nav-link" id="nav-dmd-tab" data-bs-toggle="tab" href="#nav-dmd" role="tab" aria-controls="nav-dmd" aria-selected="false"><b>Demand</b></a>
+        <a class="nav-item nav-link" id="nav-stck-tab" data-bs-toggle="tab" href="#nav-stck" role="tab" aria-controls="nav-stck" aria-selected="false"><b>Stock</b></a>
+        <a class="nav-item nav-link" id="nav-sup-tab" data-bs-toggle="tab" href="#nav-sup" role="tab" aria-controls="nav-sup" aria-selected="false"><b>Supersessions</b></a>
+        <a class="nav-item nav-link" id="nav-ord-tab" data-bs-toggle="tab" href="#nav-ord" role="tab" aria-controls="nav-ord" aria-selected="false"><b>Orders</b></a>
+      </div>
+    </nav>
+
+    <div class="tab-content" id="nav-tabContent">
+      <div class="tab-pane fade show active" id="nav-over" role="tabpanel" aria-labelledby="nav-over-tab">
+
+        </br>
+        <div class="cards-grid">
+
+          <div class="card master-card">
+            <div class="card-header bg-primary text-center text-white py-2">
+            General    
+            </div>
+            <div class="card-body">
+                <div id="pmInfo" class="pmInfo"></div>
+            </div>
+          </div>
+
+          <div class="card stock-card">
+            <div class="card-header bg-primary text-center text-white py-2">
+            Stock
+            </div>
+            <div class="card-body">
+              <div id="stockInfo" class="stockInfo"></div>
+            </div>
+          </div>  
+          
+          <div class="card dmd-card">
+            <div class="card-header bg-primary text-center text-white py-2">
+            Demand
+            </div>
+            <div class="card-body">
+              <div id="dmdInfo" class="dmdInfo"></div>
+            </div>
+          </div>
+
+          <div class="card price-card">
+            <div class="card-header bg-primary text-center text-white py-2">
+            Prices
+            </div>
+            <div class="card-body">
+              <div id="prcInfo" class="prcInfo"></div>
+            </div>
+          </div>
+        
+
+          <div class="card stock-card">
+            <div class="card-header bg-primary text-center text-white py-2">
+            Replenishment
+            </div>
+            <div class="card-body">
+              <div id="levelsInfo" class="levelsInfo"></div>
+            </div>
+          </div> 
+        </div>
+
+        <div class="card models-card mt-4">
+          <div class="card-header bg-primary text-center text-white py-2">
+          Applicable Models
+          </div>
+          <div class="card-body">
+            <div id="modelsInfo" class="modelsInfo"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="nav-dmd" role="tabpanel" aria-labelledby="nav-dmd-tab" display="none">
+        <div class="card-body">
+          <h2 class="h6 text-gray-400 mb-3">Demand by month (last 24 months, newest first)</h2>
+          <div class="table-responsive" id="dmdBreakdown"></div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="nav-stck" role="tabpanel" aria-labelledby="nav-stck-tab" display="none">
+        <div class="card-body">
+          <h2 class="h6 text-gray-400 mb-3">Stock at month end (last 24 months, newest first)</h2>
+          <div class="table-responsive" id="stckBreakdown"></div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="nav-prc" role="tabpanel" aria-labelledby="nav-prc-tab">
+        <div class="card-body">
+          <h2 class="h6 text-gray-400 mb-3">Prices by month (last 24 months, newest first)</h2>
+          <div class="d-flex flex-wrap gap-4 mb-3" id="prcCurrent"></div>
+          <div class="table-responsive" id="prcBreakdown"></div>
+        </div>
+      </div>
+
+      <!-- the part chosen in partSelect: its supersession tree and its orders (loadPartDetails) -->
+      <div class="tab-pane fade" id="nav-sup" role="tabpanel" aria-labelledby="nav-sup-tab">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 text-gray-400 mb-0">Supersession chain (full analogs), the latest number on top</h2>
+            <div class="reusable-table-actions">
+              <button id="supExport" class="btn btn-success btn-sm reusable-table-icon-button" type="button"
+                      title="Export JSON" aria-label="Export JSON" disabled>
+                <i class="fas fa-download"></i>
+              </button>
+            </div>
+          </div>
+          <div id="supTree" class="supersession-tree" role="tree" aria-label="Supersession chain"></div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="nav-ord" role="tabpanel" aria-labelledby="nav-ord-tab">
+        <div class="row">
+          <div class="col-12 col-lg-6 mb-4">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-center text-white py-2">Sales Order Summary</div>
+              <div class="card-body"><dl id="soSummary" class="order-summary"></dl></div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6 mb-4">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-center text-white py-2">Purchase Order Summary</div>
+              <div class="card-body"><dl id="poSummary" class="order-summary"></dl></div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 col-lg-6 mb-4">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-center text-white py-2">Sales Orders</div>
+              <div class="card-body">{{ data_table('soTable') }}</div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6 mb-4">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-center text-white py-2">Purchase Orders</div>
+              <div class="card-body">{{ data_table('poTable') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+
+
+<!-- 
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="dataModal" aria-labelledby="dataModalLabel">
+      <div class="offcanvas-content">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="dataModalLabel">Data Table</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <table id="myTable" class="table table-striped py-2 display compact" style="width:100%">
+        </div>
+      </div>
+    </div>
+
+ -->
+    <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true" style="display: none;">
+      <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content">
+          {# the table of every report (ReusableDataTable, includes/data-table.html), filled by makeDataTable #}
+          <div class="modal-body mb-2 py-4 px-4">
+            {{ data_table('partsTable', 'Parts Data') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+  </div>
+</div>
+
+{% endblock %}
+{% block javascripts %}
+<script type="text/javascript" nonce="{{ csp_nonce() }}">
+  $( document ).ready(function() {
+
+
+    function parseText(text) {
+      return text
+        .split(/[\n,;]+/)
+        .map(v => v.trim().toUpperCase())
+        .filter(v => v);
+    }
+
+    function debounce(func, delay) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+
+    function updateInputVisibility() {
+      $('.input-block').hide(); // скрыть все поля
+      const $selected = $('input[name="mode"]:checked');
+      const target = $selected.data('target');
+      $(target).show().find('input, textarea').focus();
+    }
+
+    async function parseFile(file) {
+      const extension = file.name.split('.').pop().toLowerCase();
+      const textParser = async () => {
+        const text = await file.text();
+        return parseText(text);
+      };
+
+      const excelParser = async () => {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        // Плоский массив всех ячеек
+        return json.flat().map(v => String(v).trim().toUpperCase()).filter(v => v);
+      };
+
+      return extension === 'xlsx' ? await excelParser() : await textParser();
+    }
+
+
+
+    async function getParsedValues() {
+      const isVisible = el => el && !!(el.offsetParent);
+
+      const input     = document.getElementById('singleinput');
+      const textarea  = document.getElementById('multiinput');
+      const fileinput = document.getElementById('fileinput');
+
+      if (isVisible(input)) {
+        const value = input.value.trim();
+        return parseText(value);
+      }
+
+      if (isVisible(textarea)) {
+        return parseText(textarea.value);
+      }
+
+      if (isVisible(fileinput) && fileinput.files.length > 0) {
+        return await parseFile(fileinput.files[0]);
+      }
+
+      return [];
+    }
+
+
+
+
+
+    // Функция генерации строки
+    function createRow(label, value) {
+      const $lbl = $('<div>').addClass('row_label').text(label);
+      const $val = $('<div>').addClass('row_value').text(value || '-');
+      return $('<div>').addClass('d-flex justify-content-between border-bottom').append($lbl, $val);
+    }
+
+    function fillCard(data,containerID) {
+      const $container = $(containerID).empty();
+      if (!data || Object.keys(data).length === 0) {
+        $container.text("No data to show");
+        return;
+      }
+      $.each(data, function(key, value) {
+          $container.append(createRow(key, value));
+      });
+    }
+
+    // Monthly table of one part: {columns: [...], rows: [[month, ...], ...], info: {...}}
+    function renderRowsTable(table, containerId) {
+      const $container = $(containerId).empty();
+      if (!table || !table.rows || table.rows.length === 0) {
+        $container.text("No data to show");
+        return;
+      }
+      const $head = $('<tr>').append(table.columns.map(c => $('<th>').addClass('border-0').text(c)));
+      const $body = $('<tbody>').append(table.rows.map(row =>
+        $('<tr>').append(row.map((v, i) => $(i === 0 ? '<th>' : '<td>').addClass(i === 0 ? 'fw-normal' : '').text(v)))));
+      $container.append($('<table>').addClass('table table-sm table-hover table-nowrap mb-0 rounded monthly-table')
+        .append($('<thead>').addClass('thead-light').append($head), $body));
+      if (table.info) {
+        const $info = $('#prcCurrent').empty();
+        $.each(table.info, (label, value) => $info.append(
+          $('<div>').append($('<span>').addClass('row_label me-2').text(label), $('<span>').addClass('row_value').text(value))));
+      }
+    }
+
+    function render(data, containerID) {
+      if (data && Array.isArray(data.rows)) {      // monthly table of the demand / stock / prices tabs
+        renderRowsTable(data, containerID);
+      } else {
+        fillCard(data, containerID);
+      }
+    }
+
+    // the cards of the last search: containerID -> {part number: data}; the part chosen in
+    // partSelect is drawn in all of them by one change handler (was: one more per card and search)
+    const overviewCards = {};
+
+    function renderData(respData, containerID) {
+      const $select = $('#partSelect');
+      $select.prop('disabled', false);
+      $.each(respData, function(respKey) { // Заполняем select ключами из JSON
+        if ($select.find(`option[value="${respKey}"]`).length === 0) {
+            $select.append($('<option>').val(respKey).text(respKey));
+            }
+        });
+      overviewCards[containerID] = respData;
+      // Отображаем данные первого элемента
+      render(respData[Object.keys(respData)[0]], containerID);
+    };
+
+    $('#partSelect').on('change', function () {
+      const part = $(this).val();
+      for (const [containerID, data] of Object.entries(overviewCards)) render(data[part], containerID);
+      loadPartDetails(part);                                // the Supersessions and Orders tabs
+    });
+
+
+
+
+
+
+
+    updateInputVisibility();
+    $('input[name="mode"]').on('change', updateInputVisibility);
+
+    // single part: the datalist gets the numbers that start with the typed text; a late answer
+    // for an older text is dropped, and a number just chosen from the list asks nothing more
+    const suggestionList = document.getElementById('partSuggestions');
+    let suggestionQuery = '';
+    document.getElementById('singleinput').addEventListener('input', debounce(async function () {
+      const query = this.value.trim().toUpperCase();
+      if (query === suggestionQuery || [...suggestionList.options].some(o => o.value === query)) return;
+      suggestionQuery = query;
+      const response = await fetch(`{{ url_for('parts.suggest') }}?q=${encodeURIComponent(query)}`);
+      const numbers = response.ok ? await response.json() : [];
+      if (query !== suggestionQuery) return;
+      suggestionList.replaceChildren(...numbers.map(number => new Option('', number)));
+    }, 150));
+
+    // Supersessions and Orders tabs: read for the part chosen in partSelect, after a search and
+    // on every change; the answer for a part chosen before the last one is dropped
+    const safeName = part => part.replace(/[^\w.-]+/g, '_');       // part numbers may hold "/" or spaces
+    let detailsRequest = 0;
+    let supersessionTree = null;
+
+    async function loadPartDetails(part) {
+      const request = ++detailsRequest;
+      const query = `?part=${encodeURIComponent(part)}`;
+      const json = response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`));
+      let tree, orders;
+      try {
+        [tree, orders] = await Promise.all([
+          fetch(`{{ url_for('parts.supersessions') }}${query}`).then(json),
+          fetch(`{{ url_for('parts.orders') }}${query}`).then(json),
+        ]);
+      } catch (error) {
+        // the tabs must not keep showing the part chosen before
+        if (request === detailsRequest) showDetailsError(part, error);
+        return;
+      }
+      if (request !== detailsRequest) return;
+      renderTree(tree, part);
+      showOrderSummary('soSummary', orders.sales.summary);
+      showOrderSummary('poSummary', orders.purchase.summary);
+      makeDataTable('soTable', orders.sales.table, `sales_orders_${safeName(part)}`);
+      makeDataTable('poTable', orders.purchase.table, `purchase_orders_${safeName(part)}`);
+    }
+
+    function showDetailsError(part, error) {
+      const message = `The details of ${part} could not be loaded (${error.message}).`;
+      supersessionTree = null;
+      document.getElementById('supExport').disabled = true;
+      document.getElementById('supTree').textContent = message;
+      for (const id of ['soSummary', 'poSummary']) document.getElementById(id).textContent = message;
+      for (const id of ['soTable', 'poTable']) makeDataTable(id, {columns: [], data: []}, id);
+    }
+
+    const percentFormat = new Intl.NumberFormat('en-US', {style: 'percent', maximumFractionDigits: 1});
+    function showOrderSummary(id, summary) {
+      const items = [['Total qty', numberFormat.format(summary.qty)], ['Orders', numberFormat.format(summary.orders)],
+                     ['First order', summary.first ?? '-'], ['Last order', summary.last ?? '-']];
+      if ('gross_profit' in summary)        // null: no invoice since the start, or the Sales report is being built
+        items.push(['Avg gross profit %', summary.gross_profit === null ? '-' : percentFormat.format(summary.gross_profit),
+                    'The mean margin of the orders invoiced since {{ gross_profit_start }} (as the Sales report)']);
+      if ('available' in summary) items.push(['Free stock', numberFormat.format(summary.available), 'Available now, all JV']);
+      document.getElementById(id).replaceChildren(...items.map(([label, value, hint]) => {
+        const item = document.createElement('div');
+        if (hint) item.title = hint;
+        item.append(Object.assign(document.createElement('dt'), {textContent: label}),
+                    Object.assign(document.createElement('dd'), {textContent: value}));
+        return item;
+      }));
+    }
+
+
+    // how a number leads to the one above it (data/parts.py SUPERSESSION_FAMILY_SQL)
+    function linkLabel(node) {
+      if (node.link === 'next') return `ICC ${node.icc}`;
+      if (node.link === 'local') return `local, ICC ${node.icc}`;
+      return node.link;                                   // override HSP / LHR, prev
+    }
+
+    // a number hung under the head because its step does not reach it (report.supersession_tree)
+    const OUTSIDE = {chain: node => `link outside the chain → ${node.leads_to}`, none: () => 'no link',
+                     loop: node => `loop → ${node.leads_to}`};
+
+    function treeList(nodes, selected) {        // opened in full
+      const list = document.createElement('ul');
+      list.setAttribute('role', 'group');
+      for (const node of nodes) {
+        const item = document.createElement('li');
+        item.setAttribute('role', 'treeitem');
+        const hasChildren = node.children.length > 0;
+        const row = document.createElement('div');
+        row.className = 'tree-row' + (node.part_number === selected ? ' selected' : '');
+        if (hasChildren) {
+          const toggle = Object.assign(document.createElement('button'), {type: 'button', className: 'tree-toggle',
+                                                                          ariaLabel: `Show / hide the numbers before ${node.part_number}`});
+          toggle.innerHTML = '<i class="fas fa-caret-right"></i>';
+          toggle.addEventListener('click', () => {
+            item.classList.toggle('collapsed');
+            item.querySelector(':scope > .tree-row .tree-icon').className =
+              `tree-icon fas ${item.classList.contains('collapsed') ? 'fa-folder' : 'fa-folder-open'}`;
+          });
+          row.append(toggle);
+        } else {
+          row.append(Object.assign(document.createElement('span'), {className: 'tree-toggle'}));
+        }
+        const icon = hasChildren ? 'fa-folder-open' : 'fa-cog';
+        row.append(Object.assign(document.createElement('i'), {className: `tree-icon fas ${icon}`}),
+                   Object.assign(document.createElement('strong'), {textContent: node.part_number}),
+                   Object.assign(document.createElement('span'), {className: 'tree-description', textContent: node.description || ''}));
+        if (node.link) row.append(Object.assign(document.createElement('span'), {className: 'tree-link', textContent: linkLabel(node)}));
+        const details = [node.outside && OUTSIDE[node.outside](node), node.tnved && `TNVED ${node.tnved}`,
+                         node.primary_vendor && `Primary vendor ${node.primary_vendor}`];
+        for (const text of details.filter(Boolean))
+          row.append(Object.assign(document.createElement('span'), {className: 'tree-detail', textContent: text}));
+        item.append(row);
+        if (hasChildren) item.append(treeList(node.children, selected));
+        list.append(item);
+      }
+      return list;
+    }
+
+    function renderTree(tree, selected) {
+      supersessionTree = tree ? {tree, selected} : null;
+      document.getElementById('supExport').disabled = !tree;
+      const container = document.getElementById('supTree');
+      if (!tree) {
+        container.textContent = `${selected} is not in the parts master.`;
+        return;
+      }
+      container.replaceChildren(treeList([tree], selected));
+    }
+
+    document.getElementById('supExport').addEventListener('click', () => {
+      const {tree, selected} = supersessionTree;
+      const link = document.createElement('a');
+      // the keys in reading order: the answer of the server has them sorted (children first)
+      const ordered = node => ({part_number: node.part_number, description: node.description, link: node.link,
+                                icc: node.icc, leads_to: node.leads_to, outside: node.outside,
+                                tnved: node.tnved, primary_vendor: node.primary_vendor,
+                                children: node.children.map(ordered)});
+      link.href = URL.createObjectURL(new Blob([JSON.stringify(ordered(tree), null, 2)], {type: 'application/json'}));
+      link.download = `supersessions_${safeName(selected)}.json`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);     // after the download has started
+    });
+
+    $('#searchBtn').on('click', async function () {
+      const values = await getParsedValues();
+      $.ajax({
+          url: "{{url_for('parts.processing')}}",
+          type: "POST",
+          contentType: 'application/json',
+          data: JSON.stringify({ parts: values }),
+
+          success: function (response) {
+              $('#partSelect').empty();
+              
+              renderData(response.overview.pm, '#pmInfo');
+              renderData(response.overview.prc, '#prcInfo');
+              renderData(response.overview.stck, '#stockInfo');
+              renderData(response.overview.dmd, '#dmdInfo');
+              renderData(response.overview.lvls, '#levelsInfo');
+              renderData(response.overview.mdls, '#modelsInfo');
+
+              renderData(response.breakdown.dmd,  "#dmdBreakdown");
+              renderData(response.breakdown.stck, "#stckBreakdown");
+              renderData(response.breakdown.prc,  "#prcBreakdown");
+
+              makeDataTable('partsTable', response.datatable, 'parts_data');
+              loadPartDetails($('#partSelect').val());
+
+          },
+
+          error: function (xhr, status, error) {
+              console.error("Error sending data:", status, error); // Handle error
+              $('#resultBox').html('<p class="text-center text-danger">Request error.</p>');
+          },
+          
+          complete: function() {
+            setTimeout(function(){
+              notifySubmitted('Submitted');            
+            },200
+          )},
+        });
+    });
+  });
+  
+
+</script>
+
+{% endblock javascripts%}

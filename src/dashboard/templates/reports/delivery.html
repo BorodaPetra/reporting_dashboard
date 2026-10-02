@@ -1,0 +1,48 @@
+{% extends "layouts/base.html" %}
+{% block title %} Parts Delivery Report {% endblock %}
+
+{% block navbar_actions %}{% include 'includes/admin_buttons.html' %}{% endblock %}
+
+{% block content %}
+{% from 'includes/data-table.html' import data_table %}
+
+    {% include 'includes/form_file_upload.html' %}
+
+    {% if chart_spec %}
+    <!-- two columns from a laptop window: the chart left, its containers right -->
+    <div class="row">
+        <div class="col-12 col-lg-6 mb-4">
+            <div class="card border-0 shadow-md h-100">
+                <div class="card-body">
+                    <div class="w-100" id="{{chart_id}}"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6 mb-4">
+            <div class="card border-0 shadow-md h-100">
+                <div class="card-body">
+                    {{ data_table('deliveryTable', 'Containers') }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-md mb-4">
+        <div class="card-body">
+            <p class="mb-0">No tracing file uploaded yet.</p>
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock content %}
+
+{% block javascripts %}
+    {% if chart_spec %}
+    <script type="text/javascript" nonce="{{ csp_nonce() }}">
+    $( document ).ready(function() {
+        chartEmbeding('#{{chart_id}}', {{ chart_spec | tojson }});
+        makeDataTable('deliveryTable', {{ table | tojson }}, 'delivery_status');
+    });
+    </script>
+    {% endif %}
+{% endblock javascripts %}

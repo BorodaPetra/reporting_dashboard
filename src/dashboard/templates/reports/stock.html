@@ -1,0 +1,78 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Parts Stock Report {% endblock %}
+
+{# the currency switch in the top bar (the page's title card was dropped) #}
+{% block navbar_actions %}
+<div class="btn-group currency-switch" role="group" aria-label="Currency">
+    <input type="radio" class="btn-check" name="currency" id="btn_usd" autocomplete="off" checked>
+    <label class="btn btn-outline-primary" for="btn_usd" title="USD">$</label>
+    <input type="radio" class="btn-check" name="currency" id="btn_rub" autocomplete="off">
+    <label class="btn btn-outline-primary" for="btn_rub" title="RUB">₽</label>
+</div>
+{% endblock navbar_actions %}
+
+{% block content %}
+{% from "includes/top_parts.html" import top_parts as top_parts_card %}
+
+<div class="row">
+    {% for usd, rub in plates %}
+    <div class="col-12 col-sm-6 col-xl-4 mb-4">
+        <div class="card border-0 shadow">
+            <div class="card-body faces">
+                {% for plate in (usd, rub) %}
+                <div class="{{ 'front' if loop.first else 'back' }} bg-white">
+                    <h2 class="h6 text-gray-400 mb-0">{{ plate.label }}</h2>
+                    <h3 class="fw-extrabold mb-2">{{ plate.value }}</h3>
+                    <div class="small">Since last month
+                        <span class="text-{{ plate.color }} fw-bolder">{{ plate.change }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- two charts a row on wide screens; the candles are two columns of panels
+     themselves and keep the full width. drawChart() fits every chart and its fonts to the card. -->
+<div class="row">
+    {% for title, key, width in [("Overall Stock Breakdown", "overview", "col-xl-6"),
+                                 ("Available Stock Breakdown by rank", "rank", "col-xl-6"),
+                                 ("Weekly Stock Candles (main warehouse only; drag on the candles to select a period)", "candles", "")] %}
+    <div class="col-12 {{ width }} mb-4">
+        <div class="card shadow-md h-100">
+            <div class="card-header bg-primary py-2">
+                <h5 class="text-white mt-2">{{ title }}</h5>
+            </div>
+            <div class="card-body faces">
+                <div class="front bg-white"><div class="w-100" id="{{ charts[key ~ '_USD']['name'] }}_usd"></div></div>
+                <div class="back bg-white"><div class="w-100" id="{{ charts[key ~ '_RUB']['name'] }}_rub"></div></div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<div class="row">
+    <div class="col-12 mb-4">
+        {{ top_parts_card("TOP-10 Parts on Free Stock, " ~ top_parts.period ~ " (USD)", top_parts,
+                          url_for('stock.top_parts_xlsx'), "the free stock") }}
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script type="text/javascript" nonce="{{ csp_nonce() }}">
+    $(document).ready(function () {
+        {% for key in ["overview", "rank", "candles"] %}
+        chartEmbeding("#{{ charts[key ~ '_USD']['name'] }}_usd", {{ charts[key ~ '_USD']['chart'] | tojson }});
+        chartEmbeding("#{{ charts[key ~ '_RUB']['name'] }}_rub", {{ charts[key ~ '_RUB']['chart'] | tojson }});
+        {% endfor %}
+
+        // one switch turns every card to USD or RUB: showFace (bihcmr.js) fades between the faces
+        $("#btn_rub").on("change", () => document.querySelectorAll(".faces").forEach(card => showFace(card, true)));
+        $("#btn_usd").on("change", () => document.querySelectorAll(".faces").forEach(card => showFace(card, false)));
+    });
+</script>
+{% endblock javascripts %}

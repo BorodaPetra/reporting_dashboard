@@ -1,0 +1,79 @@
+<div class="d-flex align-content-between flex-wrap gap-4 mb-4 mt-4"> 
+    <div class="col card shadow-lg">
+        <div class="card-body p-3 table-responsive">
+          
+		  <table class="table table-flush align-items-center summary-table">
+			<thead>
+			 <tr>
+			  {% for col in table_sales['columns'] %}
+				{% if loop.index == 1 %}
+				 <th class="border-bottom text-start text-success rounded-start bg-primary" scope="col"> {{col}} </th>
+				{% elif loop.index == 6 %}
+				 <th class="border-bottom text-end text-white rounded-end bg-primary" scope="col"> {{col}} </th>
+				{% else %}
+				 <th class="border-bottom text-end text-white bg-primary" scope="col"> {{col}} </th>
+				{% endif %}
+			  {% endfor %}
+			 </tr>
+			</thead>
+			
+			<tbody>
+			{% for row in table_sales['data'] %}
+			  <tr>
+			  {% for val in row %}
+			   {% if loop.index == 1 %}
+				<th class="text-gray-900 fw-extrabold" scope="row">  {{val}} </th>
+			   {% elif loop.index == 6 %}
+				<td class="text-end fw-extrabold">  {{val}} </td>
+			   {% else %}
+				<td class="fw-bolder text-end text-gray-500">  {{val}} </td>
+			   {% endif %}
+			  {% endfor %}
+			 </tr>
+			{% endfor %}
+			</tbody>
+          </table>
+		  
+        </div>
+    </div>
+	<div class="col card shadow-lg">
+        <div class="card-body p-3 table-responsive">
+            <table class="table table-flush align-items-center summary-table">
+                <thead>
+                <tr>
+                {% for col in table_orders['columns'] %}
+                    {% if loop.index == 1 %}
+                    <th class="border-bottom text-start text-secondary rounded-start bg-primary" scope="col">{{col}}</th>
+                    {% elif loop.index == 6 %}
+                    <th class="border-bottom text-end text-white rounded-end bg-primary" scope="col">{{col}}</th>
+                    {% else %}
+                    <th class="border-bottom text-end text-white bg-primary" scope="col">{{col}}</th>
+                    {% endif %}
+                {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in table_orders['data'] %}
+                <tr>
+                {% for data in row %}
+                    {% if loop.index == 1 %}
+                    <th class="text-gray-900 fw-extrabold" scope="row">
+                        {{ data }}
+                    </th>
+                     {% elif loop.index == 6 %}
+                        <td class="text-end fw-extrabold">
+                            {{ data }}
+                        </td>
+                    {% else %}
+                    <td class="fw-bolder text-end text-gray-500">
+                        {{ data }}
+                    </td>
+                    {% endif %}
+                {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

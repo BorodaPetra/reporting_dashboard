@@ -1,0 +1,47 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} {{ title }}  {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+{% from 'includes/data-table.html' import data_table %}
+
+    <div class="mb-4">
+        <div class="d-flex justify-content-between w-100 flex-wrap">
+            <div class="mb-3 mb-lg-0">
+                <h1 class="h4">{{ title }}</h1>
+                <div>
+                    {% with errors = get_flashed_messages(category_filter=["success"]) %}
+                    {% if errors %}
+                        <div class="success message">
+                            {%- for msg in errors %}
+                                <span style="color: green">{{ msg }}</span>
+                            {% endfor -%}
+                        </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card border-0 shadow mb-4">
+        <div class="card-body">
+            {{ data_table('users') }}
+        </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script type="text/javascript" nonce="{{ csp_nonce() }}">
+    makeDataTable("users", {{ table | tojson }}, "users", {
+        actionColumns: ["Actions"],
+        cellFormatter: (value, column) => column === "Actions"
+            ? {node: rowActions(value, "Do you really want to delete user?"), classNames: ["action-cell"]} : null,
+    });
+    </script>
+{% endblock javascripts %}

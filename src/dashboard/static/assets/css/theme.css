@@ -1,0 +1,762 @@
+/* Look of parts_potential_v1 over Volt (frontend stage 1a): light surfaces, thin borders,
+   soft shadows, one orange accent. Loaded after volt.css and reusable-data-table.css; every
+   colour is a token below, so a dark theme only redefines the tokens. */
+
+:root {
+    --bg: #f5f7fa;
+    --card-bg: #ffffff;
+    --table-head-bg: #f9fafb;
+    --hover-bg: #f2f4f7;
+    --card-header-bg: #eaecf0;          /* darker than the page (--bg) */
+
+    --border: #e4e7ec;
+    --border-strong: #d0d5dd;
+
+    --text: #101828;
+    --text-body: #344054;
+    --text-secondary: #667085;
+    --text-muted: #98a2b3;
+
+    --accent: #ff6006;
+    --accent-dark: #e45605;
+    --accent-darker: #b54708;
+    --accent-soft: #fff7ed;
+    --accent-focus: rgba(245, 158, 11, 0.12);
+
+    --shadow:                           /* a little more visible than the reference */
+        0 1px 3px rgba(16, 24, 40, 0.10),
+        0 2px 8px rgba(16, 24, 40, 0.06);
+    --radius: 10px;
+    --illustration-veil: rgba(255, 255, 255, 0.88);
+    --sidebar-veil: rgba(255, 255, 255, 0.8);
+
+    /* one font everywhere: Inter, as Volt and parts_potential_v1; the charts
+       take the same stack from reports/common/chart_theme.py (FONT) */
+    --font-sans: Inter, "Segoe UI", Arial, sans-serif;
+    --bs-font-sans-serif: var(--font-sans);     /* Volt's body, headings, inputs, tooltips */
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text-body);
+    font-size: 14px;
+}
+
+/* vega-embed wraps every chart in a .vega-embed box: the width of its card (charts.js) */
+.vega-embed {
+    width: 100%;
+}
+
+/* the chart tooltips (appended to body) set sans-serif themselves */
+#vg-tooltip-element {
+    font-family: var(--font-sans);
+}
+
+/* ---- sidebar ------------------------------------------------------------------------------ */
+
+.sidebar.bg-gray-800 {
+    background-color: var(--card-bg) !important;
+    color: var(--text-body) !important;
+    border-right: 1px solid var(--border);
+}
+
+/* a strip of the login illustration (user choice), under a white veil: the full sidebar width
+   at the bottom; its white top runs into the white sidebar, so tall screens show no seam */
+.sidebar {
+    background-image:
+        linear-gradient(var(--sidebar-veil), var(--sidebar-veil)),
+        url("../img/illustrations/landcros-sidebar.webp");
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: 100% 100%, 100% auto;
+}
+
+/* square icon buttons of the page chrome: the hamburger, the admin actions (mailing, upload) */
+.icon-button {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.icon-button:hover,
+.icon-button:focus-visible,
+.icon-button[aria-expanded="true"]:not(.sidebar-toggle) {     /* the open upload panel */
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+/* Font Awesome icons in the profile menu take the 1.25rem box of Volt's SVG icons (Volt makes
+   every span of a navbar dropdown 30 px wide, at 0,4,1), so all item texts start at one line */
+.navbar .dropdown-menu .dropdown-item .fas.dropdown-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    font-size: 0.875rem;
+}
+
+/* the profile menu opens with a short drop and grow from its corner by the profile; Volt
+   faded it with "transition: all 0.2s" (the hovers of the items crawled too) and Bootstrap
+   hides it at once, so the close stays instant */
+.navbar-nav .dashboard-dropdown {
+    transition: none;
+    transform-origin: top right;
+}
+
+.navbar-nav .dashboard-dropdown.show {
+    animation: dropdown-in 0.15s ease-out;
+}
+
+@keyframes dropdown-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar-nav .dashboard-dropdown.show {
+        animation: none;
+    }
+}
+
+/* one page grid: every page starts 24 px below the top bar (the gutter between the cards;
+   the pages add no top spacing of their own) */
+.content > .navbar-top {
+    margin-bottom: 24px;
+}
+
+/* the admin actions in the top bar, a small gap before the profile photo */
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 16px;
+}
+
+.navbar-actions:empty {
+    display: none;
+}
+
+/* hide / show: the usual hamburger button at the left of the top bar; the sidebar slides out
+   to the left while the content takes its place (Volt already animates .content: all 0.3s) */
+
+@media (min-width: 992px) {             /* below lg Volt does not show the sidebar */
+    .sidebar {
+        transition: transform 0.3s ease, visibility 0s;
+    }
+
+    /* visibility after the slide: the hidden links leave the Tab order */
+    .sidebar-collapsed .sidebar {
+        transform: translateX(-100%);
+        visibility: hidden;
+        transition: transform 0.3s ease, visibility 0s 0.3s;
+    }
+
+    .sidebar-collapsed .content {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .sidebar-toggle {
+        display: none !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    .content {
+        transition: none !important;
+    }
+}
+
+.sidebar-brand {
+    display: block;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.sidebar .dropdown-divider {
+    border-color: var(--border) !important;
+}
+
+.sidebar .nav-item .nav-link {
+    margin: 0.125rem 0;
+    border-left: 3px solid transparent;
+    border-radius: 0.5rem;
+    color: var(--text-body);
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+.sidebar .nav-item .nav-link:hover {
+    color: var(--text);
+    background-color: var(--hover-bg);
+}
+
+/* the item texts a little larger than the links around them (as since the start) */
+.sidebar-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.sidebar .nav-item.active > .nav-link {
+    color: var(--accent);
+    background-color: var(--accent-soft);
+    border-left-color: var(--accent);
+    font-weight: 600;
+}
+
+/* ---- login and registration: the same illustration behind the form ---------------------- */
+
+.auth-page {
+    background:
+        linear-gradient(var(--illustration-veil), var(--illustration-veil)),
+        url("../img/illustrations/landcros-login.webp") center / cover no-repeat;
+}
+
+/* ---- cards -------------------------------------------------------------------------------- */
+
+.content .card,
+.content .shadow.shadow-lg {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);          /* every card, with or without .shadow */
+}
+
+.content .shadow,
+.content .shadow-md,
+.content .shadow-lg {
+    box-shadow: var(--shadow) !important;
+}
+
+/* every card header light grey, the white buttons on it stand out */
+.content .card .card-header {
+    background-color: var(--card-header-bg);
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+}
+
+/* the report card headers were dark bars (bg-primary): now light grey with a dark title */
+.card-header.bg-primary {
+    background-color: var(--card-header-bg) !important;
+    color: var(--text);
+}
+
+.card-header.bg-primary.text-white,             /* Parts Data: the class on the header itself */
+.card-header.bg-primary .text-white {
+    color: var(--text) !important;
+}
+
+.card-header h5 {
+    font-size: 15px;
+    font-weight: 650;
+}
+
+/* the chart / table switches in the card headers; .active: the face that is on */
+.card-header .btn-white {
+    padding: 0.3rem 0.55rem;
+    border: 1px solid var(--border);
+    background-color: var(--card-bg) !important;
+    color: var(--text-secondary);
+    box-shadow: none;
+}
+
+.card-header .btn-white:hover,
+.card-header .btn-white:focus,
+.card-header .btn-white.active {
+    border-color: var(--accent);
+    background-color: var(--accent-soft) !important;
+    color: var(--accent);
+}
+
+/* the USD / RUB switch of the stock page, in the top bar: as high as the icon buttons */
+.currency-switch .btn {
+    height: 36px;
+    min-width: 40px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.currency-switch .btn-check:focus + .btn {
+    box-shadow: 0 0 0 3px var(--accent-focus);
+}
+
+/* ---- report cards of the home page: a picture of the report on top, the text below ---------- */
+
+.report-card {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+/* a line illustration on a light band (chosen over stock photos) */
+.report-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 140px;
+    background: var(--table-head-bg) center / auto 96px no-repeat;
+    border-bottom: 1px solid var(--border);
+}
+
+.report-card .card-body {
+    position: relative;             /* above the picture */
+    padding-top: 156px;
+}
+
+.report-card h2 {
+    color: var(--text);
+    transition: color 0.2s ease;
+}
+
+.report-card p {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.content .report-card:hover,
+.content .report-card:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--accent) !important;
+    box-shadow: 0 8px 20px rgba(16, 24, 40, 0.08) !important;
+}
+
+.report-card:hover h2,
+.report-card:focus-visible h2 {
+    color: var(--accent);
+}
+
+.report-card-sales::before    { background-image: url("../img/illustrations/home-sales.svg"); }
+.report-card-stock::before    { background-image: url("../img/illustrations/home-stock.svg"); }
+.report-card-delivery::before { background-image: url("../img/illustrations/home-delivery.svg"); }
+.report-card-parts::before    { background-image: url("../img/illustrations/home-parts.svg"); }
+
+@media (prefers-reduced-motion: reduce) {
+    .report-card {
+        transition: none;
+    }
+}
+
+/* ---- two faces of a card (showFace in bihcmr.js: chart / table, USD / RUB) -----------------
+   both faces lie in the same grid cell at the full width (so the charts inside are drawn to the
+   card at load), the hidden one invisible. The cell takes the taller face, so a switch keeps the
+   card height. A table face does not count (contain: size): it takes the height
+   of the chart and scrolls inside. */
+
+.faces {
+    display: grid;
+}
+
+.faces > .front,
+.faces > .back {
+    grid-area: 1 / 1;
+    min-width: 0;
+    padding: 0;
+}
+
+.faces > .back,
+.faces.show-back > .front {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.faces.show-back > .back {
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.faces > .table-face {
+    contain: size;
+    min-height: 260px;              /* the toolbar and a few rows, should the chart be missing */
+    display: flex;
+    flex-direction: column;
+}
+
+.faces > .table-face .reusable-table-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+}
+
+/* ---- sales tiles and summaries ------------------------------------------------------------ */
+
+.sales-tiles .card-header .fw-extrabold {
+    font-size: 13px;
+}
+
+.sales-tiles .h6 {
+    font-size: 12px;
+}
+
+.sales-tiles h4 {
+    font-size: 18px;
+    white-space: nowrap;
+}
+
+.sales-tiles [data-count-up] {
+    font-variant-numeric: tabular-nums;     /* the counting numbers keep their width */
+}
+
+/* actual, planned and difference side by side */
+.sales-tiles .tile-figures {
+    display: flex;
+    justify-content: space-evenly;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+@media (max-width: 1199.98px) {        /* three tiles of ~250 px in a 1100 px window */
+    .sales-tiles h4 {
+        font-size: 15px;
+    }
+
+    .sales-tiles .h6 {
+        font-size: 11px;
+    }
+}
+
+.sales-tiles .progress-label small,
+.sales-tiles .progress-percentage span {
+    font-size: 11px;
+}
+
+/* SALES / ORDERS side by side in a laptop window: Volt pads .card .table cells by 1.5rem and
+   keeps them on one line (684 px a table); the row labels may wrap now */
+.card .table.summary-table th,
+.card .table.summary-table td {
+    padding: 0.5rem 0.6rem;
+    font-size: 11px;
+}
+
+.card .table.summary-table tbody th {
+    white-space: normal;
+}
+
+.card .table.summary-table td {
+    font-variant-numeric: tabular-nums;     /* right-aligned digits line up */
+}
+
+@media (max-width: 1199.98px) {        /* two half-width cards of ~385 px in a 1100 px window */
+    .card .table.summary-table th,
+    .card .table.summary-table td {
+        padding: 0.4rem 0.35rem;
+        font-size: 10px;
+    }
+}
+
+/* ---- TOP-10 parts (includes/top_parts.html, sales and stock report) ---- */
+.top-parts-share {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.top-parts-share strong {
+    color: var(--text);
+}
+.top-parts-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.top-parts-row {
+    display: grid;
+    grid-template-columns: 28px minmax(180px, 1.6fr) minmax(110px, 1fr) 90px 110px minmax(120px, 2fr);
+    gap: 12px;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+}
+.top-parts-row:last-child {
+    border-bottom: 0;
+}
+.top-parts-row:hover {
+    background: var(--hover-bg);
+}
+.top-parts-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--hover-bg);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 24px;
+    text-align: center;
+}
+.top-parts-row:nth-child(-n+3) .top-parts-rank {      /* the first three stand out */
+    background: var(--accent-soft);
+    color: var(--accent-darker);
+}
+.top-parts-part {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.top-parts-part strong {
+    color: var(--text);
+}
+.top-parts-description {
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.top-parts-category {
+    display: inline-block;
+    max-width: 100%;
+    padding: 1px 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.top-parts-number {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+.top-parts-amount {
+    color: var(--text);
+    font-weight: 600;
+}
+.top-parts-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--hover-bg);
+    overflow: hidden;
+}
+.top-parts-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: var(--accent);
+}
+@media (max-width: 767.98px) {          /* a phone: three lines per part, the bar below */
+    .top-parts-row {
+        grid-template-columns: 28px 1fr auto;
+        grid-template-areas: "rank part amount" ". category qty" ". bar bar";
+        gap: 4px 12px;
+    }
+    .top-parts-rank { grid-area: rank; }
+    .top-parts-part { grid-area: part; }
+    .top-parts-row > span:nth-child(3) { grid-area: category; }
+    .top-parts-number:not(.top-parts-amount) { grid-area: qty; }
+    .top-parts-amount { grid-area: amount; }
+    .top-parts-bar { grid-area: bar; }
+}
+
+/* ---- report table toolbar (ReusableDataTable): the dashboard palette instead of the blue
+   reset and green export of the reference; pages and reset like the card header buttons,
+   the export as the one accent action ------------------------------------------------------ */
+
+.reusable-table-pagination .btn,
+.reusable-table-reset {
+    border: 1px solid var(--border) !important;
+    background-color: var(--card-bg);
+    color: var(--text-secondary);
+    box-shadow: none;
+}
+
+.reusable-table-pagination .btn:hover:not(:disabled),
+.reusable-table-reset:hover,
+.reusable-table-reset:focus {
+    border-color: var(--accent) !important;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+}
+
+.reusable-table-pagination .btn:disabled {
+    background-color: var(--table-head-bg);
+    color: var(--text-muted);
+    opacity: 1;
+}
+
+.reusable-table-actions .btn-success {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.reusable-table-actions .btn-success:hover,
+.reusable-table-actions .btn-success:focus {
+    border-color: var(--accent-dark);
+    background-color: var(--accent-dark);
+    color: #ffffff;
+}
+
+/* the text of every table 2 px smaller than the reference: cells 10 px, head
+   and filters 9 px; column filters narrower than its 150 px, so more columns fit a laptop window */
+.reusable-data-table,
+.table.reusable-data-table tbody td,
+.reusable-data-table .row-comment {
+    font-size: 10px;
+}
+
+.reusable-data-table thead th,
+.reusable-data-table .column-filter,
+.reusable-data-table .column-filter-suggestion {
+    font-size: 9px;
+}
+
+.reusable-data-table .column-filter {
+    min-width: 100px;
+}
+
+/* the comment column narrower than the 240 px of the reference (Users fits a laptop window) */
+.reusable-data-table .comment-column {
+    min-width: 180px;
+}
+
+.reusable-data-table .row-comment {
+    min-width: 170px;
+}
+
+/* action buttons in a table row (deleteForm / rowActions of bihcmr.js), smaller than in the
+   top bar; delete red on hover */
+.reusable-data-table .action-cell {
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+.reusable-data-table .row-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.reusable-data-table .action-cell .icon-button {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+}
+
+.reusable-data-table .action-cell .icon-danger:hover,
+.reusable-data-table .action-cell .icon-danger:focus-visible {
+    border-color: #fda29b;
+    background-color: #fef3f2;
+    color: #b42318;
+}
+
+/* ---- tables ------------------------------------------------------------------------------- */
+
+th.bg-primary {
+    background-color: var(--table-head-bg) !important;
+    border-bottom: 1px solid var(--border) !important;
+    font-weight: 650;
+}
+
+th.bg-primary.text-white {
+    color: var(--text-secondary) !important;
+}
+
+/* ---- buttons ------------------------------------------------------------------------------ */
+
+.btn-primary,
+.btn-gray-800 {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-gray-800:hover,
+.btn-gray-800:focus {
+    border-color: var(--accent-dark);
+    background-color: var(--accent-dark);
+    color: #ffffff;
+}
+
+.btn-primary:active,
+.btn-gray-800:active {
+    border-color: var(--accent-darker);
+    background-color: var(--accent-darker);
+}
+
+.btn-outline-primary,
+.btn-outline-gray-800 {
+    border-color: var(--border-strong);
+    background-color: var(--card-bg);
+    color: var(--text-body);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-gray-800:hover {
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
+    color: var(--accent);
+}
+
+.btn-check:checked + .btn-outline-primary {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    color: #ffffff;
+}
+
+/* ---- tabs and forms ----------------------------------------------------------------------- */
+
+.nav-tabs {
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-tabs .nav-link {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--text);
+}
+
+.nav-tabs .nav-link.active {
+    border-bottom-color: var(--accent);
+    background: transparent;
+    color: var(--text);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #fdb022;
+    box-shadow: 0 0 0 0.2rem var(--accent-focus);
+}
+
+.form-check-input:checked {
+    border-color: var(--accent);
+    background-color: var(--accent);
+}

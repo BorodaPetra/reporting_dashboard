@@ -1,0 +1,10 @@
+{# Admin actions in the top bar, left of the profile (block navbar_actions of layouts/base.html):
+   a page's own buttons (upload_row_extra; Sales: reports/sales_mailing.html) and the toggle of
+   the upload form, which stays in the page (includes/form_file_upload.html) #}
+{% if user.has_role('Admin') %}
+    {% if upload_row_extra %}{% include upload_row_extra %}{% endif %}
+    <button class="icon-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample"
+            aria-expanded="false" aria-controls="collapseExample" title="File upload" aria-label="File upload">
+        <span class="fas fa-file-upload"></span>
+    </button>
+{% endif %}

@@ -1,0 +1,21 @@
+# env / secrets
+.env
+.venv/
+
+# python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# office lock files
+~$*
+
+# runtime files: uploads, local reconciliation data (Flask instance folder, INSTANCE_PATH)
+instance/
+
+# docker compose secrets (libpq password file)
+secrets/
+
+
+# endpoint journal: a working document
+api-endpoints.md

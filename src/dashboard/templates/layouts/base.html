@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+  <!-- <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="HCMR Dashboard Platform">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="author" content="IL">
+  <title>{% block title %}{% endblock title %} · Dashboard</title>
+  <link type="text/css" href="{{ config.ASSETS_ROOT }}/css/all.min.css" rel="stylesheet">
+  <link type="text/css" href="{{ config.ASSETS_ROOT }}/vendor/notyf/notyf.min.css" rel="stylesheet">
+  <link type="text/css" href="{{ config.ASSETS_ROOT }}/css/volt.css" rel="stylesheet">
+  <link type="text/css" href="{{ config.ASSETS_ROOT }}/css/reusable-data-table.css" rel="stylesheet">
+  <link type="text/css" href="{{ config.ASSETS_ROOT }}/css/theme.css" rel="stylesheet">
+  {% block stylesheets %}{% endblock stylesheets %}
+  <!-- the collapsed sidebar is remembered; applied before the first paint so it does not flash -->
+  <script nonce="{{ csp_nonce() }}">
+    try { if (localStorage.getItem("sidebarCollapsed") === "1") document.documentElement.classList.add("sidebar-collapsed"); } catch (e) {}
+  </script>
+</head>
+
+<body>
+  <nav class="sidebar d-lg-block bg-gray-800 text-white collapse" data-simplebar id="sidebarMenu">
+    <div class="sidebar-inner px-4 pt-3">
+      <ul class="nav flex-column pt-3 pt-md-0">
+        <li class="nav-item {% if 'index' in segment %} active {% endif %}">
+          <a href="{{ url_for('home_blueprint.index') }}" class="nav-link">
+            <span class="sidebar-brand">Dashboard</span> 
+          </a>
+        </li>
+        <li role="separator" class="dropdown-divider mt-4 mb-3 border-gray-700">
+		</li>
+        <li class="nav-item">
+          <li class="nav-item {% if segment == url_for('sales.index') %} active {% endif %}">
+            <a class="nav-link" 
+			   href="{{ url_for('sales.index') }}">
+              <span class="sidebar-text">Sales Report</span>
+            </a>
+          </li>
+          <li class="nav-item {% if segment == url_for('stock.index') %} active {% endif %}">
+            <a class="nav-link" 
+			   href="{{ url_for('stock.index') }}">
+              <span class="sidebar-text">Stock Report</span>
+            </a>
+          </li>
+          <li class="nav-item {% if segment == url_for('delivery.index') %} active {% endif %}">
+            <a class="nav-link"
+			   href="{{ url_for('delivery.index') }}">
+              <span class="sidebar-text">Delivery Report</span>
+            </a>
+          </li>
+          <li class="nav-item {% if segment == url_for('parts.index') %} active {% endif %}">
+            <a class="nav-link"
+   			   href="{{ url_for('parts.index') }}">
+              <span class="sidebar-text">Parts Data</span>
+            </a>
+          </li>
+            <!-- <li class="nav-item {% if segment == url_for('stoplist_blueprint.index') %} active {% endif %}">
+            <a class="nav-link" href="{{ url_for('stoplist_blueprint.index') }}">
+              <span class="sidebar-text">Stop List</span>
+            </a>
+          </li> -->
+        </li>
+     </ul>
+    </div>
+  </nav>
+  <main class="content">
+	<nav class="navbar navbar-top navbar-expand navbar-dashboard navbar-dark ps-0 pe-2 pb-0">
+	  <div class="container-fluid px-0">
+		<button type="button" class="icon-button sidebar-toggle" title="Hide / show the menu" aria-label="Hide / show the menu"
+		        aria-controls="sidebarMenu" aria-expanded="true" data-sidebar-toggle>
+		  <i class="fas fa-bars"></i>
+		</button>
+		<div class="d-flex justify-content-end align-items-center w-100" id="navbarSupportedContent">
+		  <div class="navbar-actions">{% block navbar_actions %}{% endblock navbar_actions %}</div>
+		  <ul class="navbar-nav align-items-center">
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle pt-1 px-0" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+				  <div class="media d-flex align-items-center">
+					<img class="avatar rounded-circle" alt="Image placeholder" src="{{ config.ASSETS_ROOT }}/img/team/profile-picture-3.jpg">
+					<div class="media-body ms-2 text-dark align-items-center d-none d-lg-block">
+					  <span class="mb-0 font-small fw-bold text-gray-900">
+					  <strong>{{ current_user.username }}</strong>
+					  </span>
+					</div>
+				  </div>
+				</a>
+				<div class="dropdown-menu dashboard-dropdown dropdown-menu-end mt-2 py-1">
+				  <a class="dropdown-item d-flex align-items-center" 
+				  
+				     href="{{ url_for('authentication_blueprint.profile') }}">
+					 
+					<svg class="dropdown-icon text-gray-400 me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"></path></svg>
+				    My Profile
+				  </a>
+				{% if current_user.has_role('Admin') %}
+				<div role="separator" class="dropdown-divider my-1"></div>
+				<a class="dropdown-item d-flex align-items-center" href="{{ url_for('authentication_blueprint.admin_users') }}">
+				  <span class="fas fa-users dropdown-icon text-gray-400 me-2"></span> Users
+				</a>
+				<a class="dropdown-item d-flex align-items-center" href="{{ url_for('authentication_blueprint.admin_user_create') }}">
+				  <span class="fas fa-user-plus dropdown-icon text-gray-400 me-2"></span> Add user
+				</a>
+				<a class="dropdown-item d-flex align-items-center" href="{{ url_for('authentication_blueprint.admin_roles') }}">
+				  <span class="fas fa-user-shield dropdown-icon text-gray-400 me-2"></span> Roles
+				</a>
+				<a class="dropdown-item d-flex align-items-center" href="{{ url_for('authentication_blueprint.admin_role_create') }}">
+				  <span class="fas fa-plus-circle dropdown-icon text-gray-400 me-2"></span> Add role
+				</a>
+				{% endif %}
+				<div role="separator" class="dropdown-divider my-1">
+				</div>
+				  <a class="dropdown-item d-flex align-items-center"
+				  
+       				 href="{{ url_for('authentication_blueprint.logout') }}">
+					 
+				    <svg class="dropdown-icon text-danger me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+					  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+				    </svg>    
+				   Logout
+				  </a>
+				</div>
+			</li>
+		  </ul>
+		</div>
+	  </div>
+	</nav>
+	{% block content %}{% endblock content %}
+ 
+  </main> 
+</body>
+<footer class="mt-auto py-3"> <div class="container"> </div> </footer>
+{% include 'includes/scripts.html' %}
+{% block javascripts %}{% endblock javascripts %} 
+</html>

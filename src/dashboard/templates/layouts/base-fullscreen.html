@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{% endblock title %} · Dashboard</title>
+  <link type="text/css" href="{{ config.ASSETS_ROOT }}/css/all.min.css" rel="stylesheet">
+  <link type="text/css" href="{{ config.ASSETS_ROOT }}/css/volt.css" rel="stylesheet">
+  <link type="text/css" href="{{ config.ASSETS_ROOT }}/css/theme.css" rel="stylesheet">
+  {% block stylesheets %}{% endblock stylesheets %}
+</head>
+<body>
+  {% block content %}{% endblock content %}
+  <script type="text/javascript" src="{{ config.ASSETS_ROOT }}/vendor/bootstrap/dist/js/bootstrap.min.js"></script>
+  {% block javascripts %}{% endblock javascripts %}
+</body>
+</html>

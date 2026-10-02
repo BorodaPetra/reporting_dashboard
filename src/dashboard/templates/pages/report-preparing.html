@@ -1,0 +1,20 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Preparing the report{% endblock %}
+
+{% block content %}
+<div class="py-5">
+  <div class="card border-0 shadow">
+    <div class="card-body d-flex align-items-center">
+      <div class="spinner-border text-primary me-3" role="status" aria-hidden="true"></div>
+      <div>
+        <h1 class="h4">The report is being prepared</h1>
+        <p class="mb-0">
+          Its data is loaded from the warehouse once a day. This page refreshes
+          itself every 10 seconds and shows the report as soon as it is ready.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
